@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Roster Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #001f3f 0%, #003d7a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #001f3f;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+            color: #4a5568;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #001f3f;
+            border-bottom-color: #001f3f;
+            font-weight: 600;
+        }
+        
+        .tab:hover {
+            color: #003d7a;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #001f3f;
+        }
+        
+        textarea {
+            min-height: 200px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 14px 32px;
+            background: #001f3f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #003d7a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 31, 63, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #48bb78;
+        }
+        
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #001f3f;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            background: #f7fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 20px;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9em;
+        }
+        
+        .footer a {
+            color: #001f3f;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .preview {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .preview h2 {
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .info-box {
+            background: #bee3f8;
+            color: #2c5282;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+        
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .player-photo {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .editable {
+            min-width: 100px;
+        }
+        
+        .editable:focus {
+            background: #fff5e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏀 Sports Roster Scraper</h1>
+            <p>Automate your roster data collection for broadcasts</p>
+            <div style="margin-top: 15px;">
+                <label style="color: white; font-weight: 600; margin-right: 10px;">Sport:</label>
+                <select id="sport-selector" onchange="updateSportDisplay()" style="padding: 8px 16px; border-radius: 6px; border: none; font-size: 1em; cursor: pointer;">
+                    <option value="basketball">Basketball</option>
+                    <option value="baseball">Baseball</option>
+                    <option value="softball">Softball</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('url')">Scrape from URL</button>
+                <button class="tab" onclick="switchTab('html')">Paste HTML</button>
+            </div>
+            
+            <!-- URL Scraping Tab -->
+            <div id="url-tab" class="tab-content active">
+                <div class="info-box">
+                    <strong>How to use:</strong>
+                    Paste the roster page URL below. Works best with simpler sites. For JavaScript-heavy sites, use the "Paste HTML" tab.
+                </div>
+                <div class="input-group">
+                    <label for="roster-url">Roster Page URL</label>
+                    <input type="text" id="roster-url" placeholder="https://okstate.com/sports/mens-basketball/roster">
+                </div>
+                <button class="btn" onclick="scrapeFromUrl()">Scrape Roster</button>
+            </div>
+            
+            <!-- HTML Pasting Tab -->
+            <div id="html-tab" class="tab-content">
+                <div class="info-box">
+                    <strong>How to use:</strong>
+                    1. Go to the roster page in your browser<br>
+                    2. Right-click → "View Page Source" (or Ctrl+U / Cmd+U)<br>
+                    3. Copy all the HTML and paste it below<br>
+                    4. Also paste the URL so we can get images
+                </div>
+                <div class="input-group">
+                    <label for="page-url">Page URL (for images)</label>
+                    <input type="text" id="page-url" placeholder="https://okstate.com/sports/mens-basketball/roster">
+                </div>
+                <div class="input-group">
+                    <label for="html-content">HTML Content</label>
+                    <textarea id="html-content" placeholder="Paste the full HTML here..."></textarea>
+                </div>
+                <button class="btn" onclick="scrapeFromHtml()">Parse HTML</button>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Scraping roster data...</p>
+            </div>
+            
+            <!-- Error Message -->
+            <div class="error" id="error"></div>
+            
+            <!-- Success Message -->
+            <div class="success" id="success"></div>
+            
+            <!-- Preview Section -->
+            <div class="preview" id="preview">
+                <h2>Preview & Edit</h2>
+                <div class="preview-actions">
+                    <button class="btn btn-secondary" onclick="exportToCSV()">📥 Export to CSV</button>
+                    <button class="btn" onclick="reset()">🔄 Start Over</button>
+                </div>
+                
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                    <strong>CSV Export Options:</strong>
+                    <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label><input type="checkbox" id="export-number" checked> Jersey Number</label>
+                        <label class="basketball-export"><input type="checkbox" id="export-position" checked> Position</label>
+                        <label class="basketball-export"><input type="checkbox" id="export-year" checked> Year</label>
+                        <label class="basketball-export"><input type="checkbox" id="export-height" checked> Height</label>
+                        <label class="basketball-export"><input type="checkbox" id="export-weight" checked> Weight</label>
+                        <label><input type="checkbox" id="export-photo" checked> Photo URL</label>
+                    </div>
+                </div>
+                
+                <h3>Team Info</h3>
+                <div class="input-group">
+                    <label>Team Name</label>
+                    <input type="text" id="edit-team-name" class="editable">
+                </div>
+                
+                <h3>Players (<span id="player-count">0</span>)</h3>
+                <table id="players-table">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>#</th>
+                            <th class="basketball-col">First Name</th>
+                            <th class="basketball-col">Last Name</th>
+                            <th class="baseball-col" style="display:none;">Name</th>
+                            <th class="basketball-col">Pos</th>
+                            <th class="basketball-col">Year</th>
+                            <th class="basketball-col">Ht</th>
+                            <th class="basketball-col">Wt</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="players-tbody"></tbody>
+                </table>
+                
+                <h3 style="margin-top: 30px;">Coaches</h3>
+                <table id="coaches-table">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th class="basketball-col">First Name</th>
+                            <th class="basketball-col">Last Name</th>
+                            <th class="baseball-col" style="display:none;">Name</th>
+                            <th>Title</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coaches-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="footer">
+            © 2026 Sports Roster Scraper | Created by <strong>Cruz Sanchez</strong> | All Rights Reserved
+        </div>
+    </div>
+    
+    <script>
+        let currentRosterData = null;
+        
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+        
+        function updateSportDisplay() {
+            const sport = document.getElementById('sport-selector').value;
+            const isBaseball = sport === 'baseball' || sport === 'softball';
+            
+            // Toggle table columns
+            document.querySelectorAll('.basketball-col').forEach(col => {
+                col.style.display = isBaseball ? 'none' : '';
+            });
+            document.querySelectorAll('.baseball-col').forEach(col => {
+                col.style.display = isBaseball ? '' : 'none';
+            });
+            
+            // Toggle export checkboxes
+            document.querySelectorAll('.basketball-export').forEach(elem => {
+                elem.style.display = isBaseball ? 'none' : '';
+            });
+            document.querySelectorAll('.baseball-export').forEach(elem => {
+                elem.style.display = isBaseball ? '' : 'none';
+            });
+            
+            // Update roster data if exists
+            if (currentRosterData) {
+                updateDisplay(currentRosterData);
+            }
+        }
+        
+        async function scrapeFromUrl() {
+            const url = document.getElementById('roster-url').value.trim();
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+            
+            await scrape('url', { url: url });
+        }
+        
+        async function scrapeFromHtml() {
+            const html = document.getElementById('html-content').value.trim();
+            const url = document.getElementById('page-url').value.trim();
+            
+            if (!html) {
+                showError('Please paste HTML content');
+                return;
+            }
+            
+            await scrape('html', { html: html, url: url });
+        }
+        
+        async function scrape(method, data) {
+            hideMessages();
+            showLoading();
+            
+            try {
+                const response = await fetch('/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ method: method, ...data })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentRosterData = result.data;
+                    displayPreview(result.data);
+                    showSuccess(`Found ${result.data.players.length} players!`);
+                } else {
+                    showError(result.error || 'Failed to scrape roster');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        function displayPreview(data) {
+            document.getElementById('preview').style.display = 'block';
+            document.getElementById('edit-team-name').value = data.team_name || '';
+            document.getElementById('player-count').textContent = data.players.length;
+            
+            // Display players
+            const playersTbody = document.getElementById('players-tbody');
+            playersTbody.innerHTML = '';
+            const sport = document.getElementById('sport-selector').value;
+            const isBaseball = sport === 'baseball' || sport === 'softball';
+            
+            data.players.forEach((player, index) => {
+                const row = document.createElement('tr');
+                
+                let columns = `
+                    <td>${player.photo ? `<img src="${player.photo}" class="player-photo" onerror="this.style.display='none'">` : ''}</td>
+                    <td contenteditable="true" class="editable" data-index="${index}" data-field="number">${player.number || ''}</td>
+                `;
+                
+                if (isBaseball) {
+                    // Baseball/Softball - single name column
+                    columns += `
+                        <td contenteditable="true" class="editable baseball-col" data-index="${index}" data-field="full_name">${player.full_name || ''}</td>
+                    `;
+                } else {
+                    // Basketball - split name columns
+                    columns += `
+                        <td contenteditable="true" class="editable basketball-col" data-index="${index}" data-field="first_name">${player.first_name || ''}</td>
+                        <td contenteditable="true" class="editable basketball-col" data-index="${index}" data-field="last_name">${player.last_name || ''}</td>
+                    `;
+                }
+                
+                if (!isBaseball) {
+                    // Basketball - show position, year, height, weight
+                    columns += `
+                        <td contenteditable="true" class="editable basketball-col" data-index="${index}" data-field="position">${player.position || ''}</td>
+                        <td contenteditable="true" class="editable basketball-col" data-index="${index}" data-field="year">${player.year || ''}</td>
+                        <td contenteditable="true" class="editable basketball-col" data-index="${index}" data-field="height">${player.height || ''}</td>
+                        <td contenteditable="true" class="editable basketball-col" data-index="${index}" data-field="weight">${player.weight || ''}</td>
+                    `;
+                }
+                
+                columns += `<td><button class="btn" style="padding: 6px 12px; font-size: 0.85em;" onclick="deletePlayer(${index})">Delete</button></td>`;
+                
+                row.innerHTML = columns;
+                playersTbody.appendChild(row);
+            });
+            
+            // Display coaches
+            const coachesTbody = document.getElementById('coaches-tbody');
+            coachesTbody.innerHTML = '';
+            data.coaches.forEach((coach, index) => {
+                const row = document.createElement('tr');
+                
+                let coachColumns = `<td>${coach.photo ? `<img src="${coach.photo}" class="player-photo" onerror="this.style.display='none'">` : ''}</td>`;
+                
+                if (isBaseball) {
+                    // Baseball/Softball - single name column
+                    coachColumns += `
+                        <td contenteditable="true" class="editable baseball-col" data-coach-index="${index}" data-field="full_name">${coach.full_name || ''}</td>
+                    `;
+                } else {
+                    // Basketball - split name columns
+                    coachColumns += `
+                        <td contenteditable="true" class="editable basketball-col" data-coach-index="${index}" data-field="first_name">${coach.first_name || ''}</td>
+                        <td contenteditable="true" class="editable basketball-col" data-coach-index="${index}" data-field="last_name">${coach.last_name || ''}</td>
+                    `;
+                }
+                
+                coachColumns += `
+                    <td contenteditable="true" class="editable" data-coach-index="${index}" data-field="title">${coach.title || ''}</td>
+                    <td><button class="btn" style="padding: 6px 12px; font-size: 0.85em;" onclick="deleteCoach(${index})">Delete</button></td>
+                `;
+                
+                row.innerHTML = coachColumns;
+                coachesTbody.appendChild(row);
+            });
+            
+            // Add event listeners for editable cells
+            document.querySelectorAll('.editable').forEach(cell => {
+                cell.addEventListener('blur', function() {
+                    const index = this.dataset.index || this.dataset.coachIndex;
+                    const field = this.dataset.field;
+                    const value = this.textContent.trim();
+                    
+                    if (this.dataset.index !== undefined) {
+                        currentRosterData.players[index][field] = value;
+                    } else {
+                        currentRosterData.coaches[index][field] = value;
+                    }
+                });
+            });
+        }
+        
+        function deletePlayer(index) {
+            currentRosterData.players.splice(index, 1);
+            displayPreview(currentRosterData);
+        }
+        
+        function deleteCoach(index) {
+            currentRosterData.coaches.splice(index, 1);
+            displayPreview(currentRosterData);
+        }
+        
+        async function exportToCSV() {
+            if (!currentRosterData) return;
+            
+            // Update team name from edit field
+            currentRosterData.team_name = document.getElementById('edit-team-name').value;
+            
+            // Get sport selection
+            const sport = document.getElementById('sport-selector').value;
+            
+            // Get export options based on sport
+            let exportOptions = {
+                number: document.getElementById('export-number').checked,
+                photo: document.getElementById('export-photo').checked
+            };
+            
+            if (sport === 'basketball') {
+                exportOptions.position = document.getElementById('export-position').checked;
+                exportOptions.year = document.getElementById('export-year').checked;
+                exportOptions.height = document.getElementById('export-height').checked;
+                exportOptions.weight = document.getElementById('export-weight').checked;
+            }
+            
+            try {
+                const response = await fetch('/export/csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        roster_data: currentRosterData,
+                        sport: sport,
+                        export_options: exportOptions
+                    })
+                });
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentRosterData.team_name || 'roster'}_${sport}_roster.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showSuccess('CSV exported successfully!');
+            } catch (error) {
+                showError('Failed to export CSV: ' + error.message);
+            }
+        }
+        
+        function reset() {
+            currentRosterData = null;
+            document.getElementById('preview').style.display = 'none';
+            document.getElementById('roster-url').value = '';
+            document.getElementById('html-content').value = '';
+            document.getElementById('page-url').value = '';
+            hideMessages();
+        }
+        
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+        
+        function hideMessages() {
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

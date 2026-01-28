@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug - Find Jersey Numbers</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+        }
+        .debug-output {
+            background: #f5f5f5;
+            padding: 20px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        .highlight {
+            background: yellow;
+            font-weight: bold;
+        }
+        pre {
+            background: #fff;
+            padding: 15px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Tool - Find Jersey Numbers</h1>
+    
+    <h2>Instructions:</h2>
+    <ol>
+        <li>Go to OK State roster page</li>
+        <li>View Source (Ctrl+U)</li>
+        <li>Search for "Jaylen Curry" in the HTML</li>
+        <li>Copy about 50 lines BEFORE and AFTER his name</li>
+        <li>Paste it below</li>
+    </ol>
+    
+    <h3>Paste HTML snippet here:</h3>
+    <textarea id="html-input" placeholder="Paste HTML snippet here..."></textarea>
+    
+    <button onclick="analyze()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Analyze HTML</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        function analyze() {
+            const html = document.getElementById('html-input').value;
+            const output = document.getElementById('output');
+            
+            if (!html) {
+                output.innerHTML = '<p style="color: red;">Please paste some HTML first!</p>';
+                return;
+            }
+            
+            let results = '<div class="debug-output">';
+            results += '<h2>Analysis Results:</h2>';
+            
+            // Look for number patterns
+            results += '<h3>1. Number Patterns Found:</h3>';
+            const numberPatterns = [
+                { name: '#XX pattern', regex: /#(\d{1,3})\b/g },
+                { name: 'No. XX pattern', regex: /No\.?\s*(\d{1,3})\b/g },
+                { name: 'Jersey XX pattern', regex: /Jersey\s*(\d{1,3})\b/g },
+                { name: 'data-number attribute', regex: /data-number=["'](\d+)["']/g },
+                { name: 'data-jersey attribute', regex: /data-jersey=["'](\d+)["']/g },
+                { name: 'Standalone 1-2 digit numbers', regex: /\b(\d{1,2})\b/g }
+            ];
+            
+            numberPatterns.forEach(pattern => {
+                const matches = [...html.matchAll(pattern.regex)];
+                if (matches.length > 0) {
+                    results += `<p><strong>${pattern.name}:</strong> Found ${matches.length} matches</p>`;
+                    matches.forEach(match => {
+                        results += `<pre>${escapeHtml(match[0])}</pre>`;
+                    });
+                } else {
+                    results += `<p>${pattern.name}: ❌ Not found</p>`;
+                }
+            });
+            
+            // Look for class names with "number" or "jersey"
+            results += '<h3>2. Elements with "number" or "jersey" in class:</h3>';
+            const classPattern = /class=["']([^"']*(?:number|jersey)[^"']*)["']/gi;
+            const classMatches = [...html.matchAll(classPattern)];
+            
+            if (classMatches.length > 0) {
+                results += `<p>Found ${classMatches.length} elements:</p>`;
+                classMatches.forEach(match => {
+                    results += `<pre>${escapeHtml(match[0])}</pre>`;
+                });
+            } else {
+                results += '<p>❌ No elements found with number/jersey classes</p>';
+            }
+            
+            // Look for spans
+            results += '<h3>3. All &lt;span&gt; tags:</h3>';
+            const spanPattern = /<span[^>]*>([^<]*)<\/span>/gi;
+            const spanMatches = [...html.matchAll(spanPattern)];
+            
+            if (spanMatches.length > 0) {
+                results += `<p>Found ${spanMatches.length} spans:</p>`;
+                spanMatches.slice(0, 20).forEach(match => {
+                    results += `<pre>${escapeHtml(match[0])}</pre>`;
+                });
+                if (spanMatches.length > 20) {
+                    results += `<p><em>...and ${spanMatches.length - 20} more</em></p>`;
+                }
+            }
+            
+            // Show the full HTML with line numbers
+            results += '<h3>4. Full HTML with line numbers:</h3>';
+            const lines = html.split('\n');
+            let numberedHTML = '';
+            lines.forEach((line, i) => {
+                numberedHTML += `<span style="color: #999;">${String(i+1).padStart(4, ' ')}</span> ${escapeHtml(line)}\n`;
+            });
+            results += `<pre>${numberedHTML}</pre>`;
+            
+            results += '</div>';
+            
+            output.innerHTML = results;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
